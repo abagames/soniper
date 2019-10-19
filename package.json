@@ -1,0 +1,23 @@
+{
+  "name": "soniper",
+  "version": "1.0.0",
+  "description": "Sonic warehouse keeper",
+  "scripts": {
+    "watch": "parcel src/soniper/index.html -d tmp",
+    "build": "parcel build src/soniper/index.html -d docs/%npm_package_config_game% --no-source-maps --public-url ./"
+  },
+  "author": "abagames",
+  "license": "MIT",
+  "browserslist": [
+    "last 1 Chrome version"
+  ],
+  "devDependencies": {
+    "parcel-bundler": "^1.12.4",
+    "parcel-plugin-clean-dist": "0.0.6",
+    "typescript": "^3.6.4"
+  },
+  "dependencies": {
+    "gif-capture-canvas": "^1.0.1",
+    "sounds-some-sounds": "^1.0.5"
+  }
+}
