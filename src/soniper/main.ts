@@ -1,12 +1,15 @@
+import * as level from "./level";
+import * as charPatterns from "./charPatterns";
 import * as main from "../util/main";
 import * as view from "../util/view";
 import * as text from "../util/text";
 import { Terminal } from "../util/terminal";
 import * as input from "../util/input";
 import * as actor from "../util/actor";
-import { Vector } from "../util/vector";
 import * as sound from "sounds-some-sounds";
+import { Vector } from "../util/vector";
 
+export const terminalSize = new Vector(25, 18);
 type State = "title" | "inGame" | "gameOver";
 let state: State;
 let updateFunc = {
@@ -24,18 +27,19 @@ main.init(init, update, {
 
 function init() {
   sound.init(205);
-  terminal = new Terminal({ x: 25, y: 18 });
-  actor.setActorClass(Actor);
-  text.defineSymbols(charPatterns, "A");
+  terminal = new Terminal(terminalSize);
+  //actor.setActorClass(Actor);
+  charPatterns.init();
+  level.init();
   initInGame();
   //initTitle();
 }
 
 function update() {
   view.clear();
-  terminal.clear();
   updateFunc[state]();
   actor.update();
+  level.terminal.draw();
   terminal.draw();
   ticks++;
 }
@@ -45,6 +49,7 @@ function initInGame() {
   state = "inGame";
   actor.reset();
   ticks = 0;
+  level.start(0);
   //actor.spawn(player);
 }
 
@@ -52,49 +57,6 @@ function updateInGame() {
   /*if (ticks === 150) {
     sound.playBgm();
   }*/
-}
-
-const angleOffsets = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-
-function player(a: Actor) {}
-
-class Actor extends actor.Actor {
-  pos = new Vector();
-  char = "A";
-  rotation = "k";
-  color = "w";
-  animInterval = 30;
-  animCount = 1;
-  moveInterval = 20;
-  moveTicks = 0;
-  animIndex = 0;
-  animIndexVel = 1;
-
-  update() {
-    super.update();
-    terminal.print(" ", this.pos.x, this.pos.y);
-    if (this.animCount >= 2 && this.ticks % this.animInterval === 0) {
-      this.animIndex += this.animIndexVel;
-      if (this.animIndex < 0 || this.animIndex >= this.animCount) {
-        this.animIndexVel *= -1;
-        this.animIndex += this.animIndexVel * 2;
-      }
-    }
-    terminal.print(
-      String.fromCharCode(this.char.charCodeAt(0) + this.animIndex),
-      this.pos.x,
-      this.pos.y,
-      {
-        color: this.color,
-        symbol: "s",
-        rotation: this.rotation
-      }
-    );
-  }
-
-  testCollision(aa: Actor) {
-    return this.pos.x === aa.pos.x && this.pos.y === aa.pos.y;
-  }
 }
 
 function initTitle() {
@@ -126,5 +88,3 @@ function updateGameOver() {
     initTitle();
   }
 }
-
-const charPatterns = [];
