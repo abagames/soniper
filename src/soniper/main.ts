@@ -67,6 +67,7 @@ function updateInGame() {
     if (isCrateClicked) {
       text.print("H", cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
       if (pointer.isJustPressed) {
+        console.log(level.getPath(crateClickedPos, cursorPos));
         isCrateClicked = false;
       }
     } else {
