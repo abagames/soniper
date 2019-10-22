@@ -20,8 +20,11 @@ let updateFunc = {
 let ticks = 0;
 let terminal: Terminal;
 let cursorPos = new Vector();
+let prevCursorPos = new Vector();
 let isCrateClicked: boolean;
 let crateClickedPos = new Vector();
+let isValidPos: boolean;
+let cratePath: number[];
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -53,6 +56,8 @@ function initInGame() {
   actor.reset();
   ticks = 0;
   isCrateClicked = false;
+  isValidPos = false;
+  prevCursorPos.set(-1);
   level.start(0);
   //actor.spawn(player);
 }
@@ -62,18 +67,30 @@ function updateInGame() {
     .set(pointer.pos)
     .div(6)
     .floor();
-  if (cursorPos.isInRect(0, 0, terminalSize.x - 1, terminalSize.y - 1)) {
+  if (cursorPos.isInRect(0, 0, terminalSize.x, terminalSize.y)) {
     const g = level.grid[cursorPos.x][cursorPos.y];
     if (isCrateClicked) {
-      text.print("H", cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
+      if (!prevCursorPos.equals(cursorPos)) {
+        cratePath = level.getPath(crateClickedPos, cursorPos);
+        isValidPos = cratePath != null;
+        prevCursorPos.set(cursorPos);
+      }
+      const cc = isValidPos ? "H" : "I";
+      text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
       if (pointer.isJustReleased) {
-        console.log(level.getPath(crateClickedPos, cursorPos));
+        console.log(cratePath);
         isCrateClicked = false;
       }
     } else {
-      const cc = g === "crate" || g === "crate on dot" ? "H" : "I";
+      if (!prevCursorPos.equals(cursorPos)) {
+        isValidPos =
+          (g === "crate" || g === "crate on dot") &&
+          level.getMovableAngles(cursorPos).length > 0;
+        prevCursorPos.set(cursorPos);
+      }
+      const cc = isValidPos ? "H" : "I";
       text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
-      if (cc === "H" && pointer.isJustPressed) {
+      if (isValidPos && pointer.isJustPressed) {
         crateClickedPos.set(cursorPos);
         isCrateClicked = true;
       }

@@ -79,10 +79,13 @@ export function draw() {
   terminal.print(pc, playerPos.x, playerPos.y, { symbol: "s", rotation: rc });
 }
 
-export function getPath(sp: VectorLike, dp: VectorLike) {
+export function getPath(sp: Vector, dp: Vector) {
+  if (!dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2)) {
+    return;
+  }
   playerPrevPos.set(playerPos);
-  removeCrate(sp);
   const fa = getMovableAngles(sp);
+  removeCrate(sp);
   crateMovableStatuses = [{ path: [], pos: sp, angles: fa }];
   crateMovableStatusHashes = {};
   crateMovableStatusHashes[objToHash({ pos: sp, angles: fa })] = true;
@@ -117,6 +120,9 @@ export function getPath(sp: VectorLike, dp: VectorLike) {
       return result;
     }
   }
+  setCrate(sp);
+  playerPos.set(playerPrevPos);
+  return;
 }
 
 export function getMovableAngles(p: VectorLike) {

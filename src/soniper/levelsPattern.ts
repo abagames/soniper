@@ -1,9 +1,9 @@
 export const patterns = [
   `
 wwwwwwww
-w   w dw
-w      w
-w   wc w
+wd  w dw
+wc   c w
+w   w  w
 w   w kw
 wwwwwwww
 `
