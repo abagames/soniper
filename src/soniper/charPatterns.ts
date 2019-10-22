@@ -42,8 +42,10 @@ brrbbb
 brrbrr
 `,
   `
-rr
-rr
+ rr
+rrrr
+rrrr
+ rr
 `,
   `
 yyyyyy
@@ -62,12 +64,12 @@ g    g
 gggggg
 `,
   `
-rggggr
-gr  rg
-g rr g
-g rr g
-gr  rg
-rggggr
+r    r
+ r  r
+  rr
+  rr
+ r  r
+r    r
 `,
   `
 l
