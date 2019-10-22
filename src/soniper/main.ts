@@ -21,6 +21,7 @@ let ticks = 0;
 let terminal: Terminal;
 let cursorPos = new Vector();
 let isCrateClicked: boolean;
+let crateClickedPos = new Vector();
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -61,10 +62,26 @@ function updateInGame() {
     .set(pointer.pos)
     .div(6)
     .floor();
-  if (cursorPos.isInRect(0, 0, terminalSize.x, terminalSize.y)) {
+  if (cursorPos.isInRect(0, 0, terminalSize.x - 1, terminalSize.y - 1)) {
     const g = level.grid[cursorPos.x][cursorPos.y];
-    const cc = g === "crate" || g === "crate on dot" ? "H" : "I";
-    text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
+    if (isCrateClicked) {
+      text.print("H", cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
+      if (pointer.isJustPressed) {
+        isCrateClicked = false;
+      }
+    } else {
+      const cc = g === "crate" || g === "crate on dot" ? "H" : "I";
+      text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
+      if (cc === "H" && pointer.isJustPressed) {
+        crateClickedPos.set(cursorPos);
+        isCrateClicked = true;
+      }
+    }
+  }
+  if (isCrateClicked) {
+    text.print("G", crateClickedPos.x * 6, crateClickedPos.y * 6, {
+      symbol: "s"
+    });
   }
   /*if (ticks === 150) {
     sound.playBgm();

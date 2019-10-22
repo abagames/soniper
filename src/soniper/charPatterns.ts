@@ -42,12 +42,8 @@ brrbbb
 brrbrr
 `,
   `
-
-
-  rr
-  rr
-
-
+rr
+rr
 `,
   `
 yyyyyy
