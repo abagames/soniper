@@ -5,8 +5,8 @@ import { Vector } from "../util/vector";
 import { range } from "../util/math";
 
 export let terminal: Terminal;
-type GridType = "empty" | "wall" | "dot" | "crate" | "crate on dot";
-let grid: GridType[][];
+export type GridType = "empty" | "wall" | "dot" | "crate" | "crate on dot";
+export let grid: GridType[][];
 let size = new Vector();
 let offset = new Vector();
 let playerPos = new Vector();

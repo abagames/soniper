@@ -66,12 +66,12 @@ g    g
 gggggg
 `,
   `
-gggggg
+rggggr
 gr  rg
 g rr g
 g rr g
 gr  rg
-gggggg
+rggggr
 `,
   `
 l

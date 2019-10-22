@@ -25,7 +25,8 @@ export function init(_isUsingVirtualPad = true, _isFourWaysStick = false) {
     isFourWaysStick
   });
   pointer.init(view.canvas, view.size, {
-    onPointerDownOrUp: sound.playEmpty
+    onPointerDownOrUp: sound.playEmpty,
+    anchor: new Vector(0.5)
   });
 }
 

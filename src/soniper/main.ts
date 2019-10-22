@@ -4,7 +4,7 @@ import * as main from "../util/main";
 import * as view from "../util/view";
 import * as text from "../util/text";
 import { Terminal } from "../util/terminal";
-import * as input from "../util/input";
+import * as pointer from "../util/pointer";
 import * as actor from "../util/actor";
 import * as sound from "sounds-some-sounds";
 import { Vector } from "../util/vector";
@@ -19,6 +19,8 @@ let updateFunc = {
 };
 let ticks = 0;
 let terminal: Terminal;
+let cursorPos = new Vector();
+let isCrateClicked: boolean;
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -37,9 +39,9 @@ function init() {
 
 function update() {
   view.clear();
+  level.terminal.draw();
   updateFunc[state]();
   actor.update();
-  level.terminal.draw();
   terminal.draw();
   ticks++;
 }
@@ -49,11 +51,21 @@ function initInGame() {
   state = "inGame";
   actor.reset();
   ticks = 0;
+  isCrateClicked = false;
   level.start(0);
   //actor.spawn(player);
 }
 
 function updateInGame() {
+  cursorPos
+    .set(pointer.pos)
+    .div(6)
+    .floor();
+  if (cursorPos.isInRect(0, 0, terminalSize.x, terminalSize.y)) {
+    const g = level.grid[cursorPos.x][cursorPos.y];
+    const cc = g === "crate" || g === "crate on dot" ? "H" : "I";
+    text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
+  }
   /*if (ticks === 150) {
     sound.playBgm();
   }*/
@@ -68,7 +80,7 @@ function updateTitle() {
   terminal.print(" SONIPER ", 5, 3, { color: "l", backgroundColor: "w" });
   if (ticks > 30) {
   }
-  if (input.isJustPressed) {
+  if (pointer.isJustPressed) {
     initInGame();
   }
 }
@@ -76,13 +88,13 @@ function updateTitle() {
 function initGameOver() {
   sound.stopBgm();
   state = "gameOver";
-  input.clearJustPressed();
+  pointer.clearJustPressed();
   ticks = 0;
 }
 
 function updateGameOver() {
   terminal.print(" GAME OVER ", 4, 3, { color: "l", backgroundColor: "w" });
-  if (ticks > 20 && input.isJustPressed) {
+  if (ticks > 20 && pointer.isJustPressed) {
     initInGame();
   } else if (ticks > 300) {
     initTitle();
