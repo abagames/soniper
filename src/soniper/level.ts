@@ -7,10 +7,17 @@ import { range } from "../util/math";
 export let terminal: Terminal;
 export type GridType = "empty" | "wall" | "dot" | "crate" | "crate on dot";
 export let grid: GridType[][];
+export const angleOffsets: VectorLike[] = [
+  { x: 1, y: 0 },
+  { x: 0, y: 1 },
+  { x: -1, y: 0 },
+  { x: 0, y: -1 }
+];
+export const keeperPos = new Vector();
+export let keeperAngle = 0;
+const keeperPrefPos = new Vector();
 let size = new Vector();
 let offset = new Vector();
-let playerPos = new Vector();
-let playerAngle = 0;
 const charToType: { [s: string]: GridType } = {
   " ": "empty",
   k: "empty",
@@ -27,15 +34,13 @@ const typeToSymbol: { [g: string]: string } = {
   crate: "C",
   "crate on dot": "D"
 };
-const angleOffsets = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-let playerMovableGrid: boolean[][];
+let keeperMovableGrid: boolean[][];
 let crateMovableStatuses: {
   path: number[];
   pos: VectorLike;
   angles: number[];
 }[];
 let crateMovableStatusHashes: { [h: number]: boolean };
-const playerPrevPos = new Vector();
 
 export function init() {
   terminal = new Terminal(terminalSize);
@@ -56,13 +61,13 @@ export function start(count: number) {
   p.forEach((l, y) => {
     l.split("").map((c, x) => {
       if (c === "k" || c === "K") {
-        playerPos.set(x + offset.x, y + offset.y);
+        keeperPos.set(x + offset.x, y + offset.y);
       }
       grid[x + offset.x][y + offset.y] = charToType[c];
     });
   });
   draw();
-  playerMovableGrid = range(terminalSize.x).map(() =>
+  keeperMovableGrid = range(terminalSize.x).map(() =>
     range(terminalSize.y).map(() => false)
   );
 }
@@ -74,16 +79,16 @@ export function draw() {
       terminal.print(typeToSymbol[grid[x][y]], x, y, { symbol: "s" });
     }
   }
-  const pc = playerAngle % 2 == 0 ? "A" : "B";
-  const rc = ["k", "k", "n", "o"][playerAngle];
-  terminal.print(pc, playerPos.x, playerPos.y, { symbol: "s", rotation: rc });
+  const kc = keeperAngle % 2 == 0 ? "A" : "B";
+  const rc = ["k", "k", "n", "o"][keeperAngle];
+  terminal.print(kc, keeperPos.x, keeperPos.y, { symbol: "s", rotation: rc });
 }
 
 export function getPath(sp: Vector, dp: Vector) {
   if (!dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2)) {
     return;
   }
-  playerPrevPos.set(playerPos);
+  keeperPrefPos.set(keeperPos);
   const fa = getMovableAngles(sp);
   removeCrate(sp);
   crateMovableStatuses = [{ path: [], pos: sp, angles: fa }];
@@ -94,14 +99,14 @@ export function getPath(sp: Vector, dp: Vector) {
     const s = crateMovableStatuses.shift();
     s.angles.forEach(a => {
       const ao = angleOffsets[a];
-      const pos = { x: s.pos.x + ao[0], y: s.pos.y + ao[1] };
+      const pos = { x: s.pos.x + ao.x, y: s.pos.y + ao.y };
       const np = s.path.concat([a]);
       if (pos.x === dp.x && pos.y === dp.y) {
         result = np;
         return;
       }
       setCrate(pos);
-      playerPos.set(s.pos);
+      keeperPos.set(s.pos);
       const na = getMovableAngles(pos);
       removeCrate(pos);
       const nsh = objToHash({ pos, angles: na });
@@ -116,12 +121,12 @@ export function getPath(sp: Vector, dp: Vector) {
     });
     if (result != null || crateMovableStatuses.length === 0) {
       setCrate(sp);
-      playerPos.set(playerPrevPos);
+      keeperPos.set(keeperPrefPos);
       return result;
     }
   }
   setCrate(sp);
-  playerPos.set(playerPrevPos);
+  keeperPos.set(keeperPrefPos);
   return;
 }
 
@@ -134,33 +139,33 @@ export function getMovableAngles(p: VectorLike) {
   }
   for (let y = offset.y + 1; y < offset.y + size.y - 1; y++) {
     for (let x = offset.x + 1; x < offset.x + size.x - 1; x++) {
-      playerMovableGrid[x][y] = false;
+      keeperMovableGrid[x][y] = false;
     }
   }
-  playerMovableGrid[playerPos.x][playerPos.y] = true;
+  keeperMovableGrid[keeperPos.x][keeperPos.y] = true;
   for (let i = 0; i < 9; i++) {
-    const fc = fillPlayerMovableForward() + fillPlayerMovableBackward();
+    const fc = fillKeeperMovableForward() + fillKeeperMovableBackward();
     if (fc === 0) {
       break;
     }
   }
   angles = angles.filter(a => {
     const ao = angleOffsets[a];
-    return playerMovableGrid[p.x - ao[0]][p.y - ao[1]];
+    return keeperMovableGrid[p.x - ao.x][p.y - ao.y];
   });
   return angles;
 }
 
-function fillPlayerMovableForward() {
+function fillKeeperMovableForward() {
   let c = 0;
   for (let y = offset.y + 1; y < offset.y + size.y - 1; y++) {
     for (let x = offset.x + 1; x < offset.x + size.x - 1; x++) {
       if (
-        !playerMovableGrid[x][y] &&
+        !keeperMovableGrid[x][y] &&
         !checkWall(x, y) &&
         (checkMovable(x, y - 1) || checkMovable(x - 1, y))
       ) {
-        playerMovableGrid[x][y] = true;
+        keeperMovableGrid[x][y] = true;
         c++;
       }
     }
@@ -168,16 +173,16 @@ function fillPlayerMovableForward() {
   return c;
 }
 
-function fillPlayerMovableBackward() {
+function fillKeeperMovableBackward() {
   let c = 0;
   for (let y = offset.y + size.y - 2; y > offset.y; y--) {
     for (let x = offset.x + size.x - 2; x > offset.x; x--) {
       if (
-        !playerMovableGrid[x][y] &&
+        !keeperMovableGrid[x][y] &&
         !checkWall(x, y) &&
         (checkMovable(x + 1, y) || checkMovable(x, y + 1))
       ) {
-        playerMovableGrid[x][y] = true;
+        keeperMovableGrid[x][y] = true;
         c++;
       }
     }
@@ -195,18 +200,23 @@ function checkWall(x, y) {
 
 function checkMovable(x, y) {
   return (
-    (grid[x][y] === "empty" || grid[x][y] === "dot") && playerMovableGrid[x][y]
+    (grid[x][y] === "empty" || grid[x][y] === "dot") && keeperMovableGrid[x][y]
   );
 }
 
-function removeCrate(p) {
+export function removeCrate(p) {
   const g = grid[p.x][p.y];
   grid[p.x][p.y] = g === "crate on dot" ? "dot" : "empty";
 }
 
-function setCrate(p) {
+export function setCrate(p) {
   const g = grid[p.x][p.y];
   grid[p.x][p.y] = g === "dot" ? "crate on dot" : "crate";
+}
+
+export function setKeeper(p, a) {
+  keeperPos.set(p);
+  keeperAngle = a;
 }
 
 function objToHash(o) {

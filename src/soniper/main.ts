@@ -7,7 +7,7 @@ import { Terminal } from "../util/terminal";
 import * as pointer from "../util/pointer";
 import * as actor from "../util/actor";
 import * as sound from "sounds-some-sounds";
-import { Vector } from "../util/vector";
+import { Vector, VectorLike } from "../util/vector";
 
 export const terminalSize = new Vector(25, 18);
 type State = "title" | "inGame" | "gameOver";
@@ -25,6 +25,13 @@ let isCrateClicked: boolean;
 let crateClickedPos = new Vector();
 let isValidPos: boolean;
 let cratePath: number[];
+let moveAnimations: {
+  type: "appear" | "disappear";
+  char: "keeper" | "crate";
+  pos: VectorLike;
+  angle?: number;
+}[][];
+let moveAnimationTicks: number;
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -58,11 +65,23 @@ function initInGame() {
   isCrateClicked = false;
   isValidPos = false;
   prevCursorPos.set(-1);
+  moveAnimations = [];
   level.start(0);
   //actor.spawn(player);
 }
 
 function updateInGame() {
+  if (moveAnimations.length > 0) {
+    animateMove();
+  } else {
+    updateCursor();
+  }
+  /*if (ticks === 150) {
+    sound.playBgm();
+  }*/
+}
+
+function updateCursor() {
   cursorPos
     .set(pointer.pos)
     .div(6)
@@ -78,7 +97,9 @@ function updateInGame() {
       const cc = isValidPos ? "H" : "I";
       text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
       if (pointer.isJustReleased) {
-        console.log(cratePath);
+        if (cratePath != null) {
+          setMoveAnimation(cratePath, crateClickedPos);
+        }
         isCrateClicked = false;
       }
     } else {
@@ -101,9 +122,101 @@ function updateInGame() {
       symbol: "s"
     });
   }
-  /*if (ticks === 150) {
-    sound.playBgm();
-  }*/
+}
+
+function animateMove() {
+  moveAnimationTicks -= 1;
+  if (moveAnimationTicks <= 0) {
+    moveAnimations[0].forEach(a => {
+      if (a.char === "crate" && a.type === "disappear") {
+        level.removeCrate(a.pos);
+      }
+    });
+    moveAnimations.shift();
+    if (moveAnimations.length > 0) {
+      moveAnimations[0].forEach(a => {
+        if (a.type === "appear") {
+          if (a.char === "crate") {
+            level.setCrate(a.pos);
+          } else {
+            level.setKeeper(a.pos, a.angle);
+          }
+        }
+      });
+    }
+    moveAnimationTicks = 4;
+  }
+  level.draw();
+  if (moveAnimations.length === 0) {
+    return;
+  }
+  moveAnimations[0].forEach(a => {
+    const i = a.type === "appear" ? moveAnimationTicks : 4 - moveAnimationTicks;
+    text.print(
+      String.fromCharCode("J".charCodeAt(0) + i),
+      a.pos.x * 6,
+      a.pos.y * 6,
+      {
+        symbol: "s"
+      }
+    );
+  });
+}
+
+function setMoveAnimation(angles: number[], cratePos: Vector) {
+  let pa = angles[0];
+  moveAnimations = [];
+  addKeeperAnimation(level.keeperPos, pa);
+  addAnimation(cratePos, pa, "disappear");
+  angles.forEach((a, i) => {
+    if (i === angles.length - 1 || a !== pa) {
+      if (a !== pa) {
+        addAnimation(cratePos, pa, "appear");
+        const ao = level.angleOffsets[pa];
+        addKeeperAnimation({ x: cratePos.x - ao.x, y: cratePos.y - ao.y }, a);
+        addAnimation(cratePos, a, "disappear");
+        pa = a;
+      }
+      if (i === angles.length - 1) {
+        cratePos.add(level.angleOffsets[a]);
+        addAnimation(cratePos, a, "appear");
+      }
+    }
+    cratePos.add(level.angleOffsets[a]);
+  });
+  moveAnimationTicks = 5;
+  function addAnimation(
+    pos: VectorLike,
+    angle: number,
+    type: "appear" | "disappear"
+  ) {
+    const ao = level.angleOffsets[angle];
+    moveAnimations.push([
+      {
+        type,
+        char: "crate",
+        pos: { x: pos.x, y: pos.y }
+      },
+      {
+        type,
+        char: "keeper",
+        pos: { x: pos.x - ao.x, y: pos.y - ao.y },
+        angle
+      }
+    ]);
+  }
+  function addKeeperAnimation(pos: VectorLike, angle: number) {
+    const ao = level.angleOffsets[angle];
+    moveAnimations.push([{ type: "disappear", char: "keeper", pos }]);
+    moveAnimations.push([
+      {
+        type: "appear",
+        char: "keeper",
+        pos: { x: cratePos.x - ao.x, y: cratePos.y - ao.y },
+        angle
+      }
+    ]);
+  }
 }
 
 function initTitle() {
