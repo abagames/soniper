@@ -1,11 +1,18 @@
 import { terminalSize } from "./main";
 import { Terminal } from "../util/terminal";
 import { patterns } from "./levelsPattern";
+import * as generator from "./generator";
 import { Vector, VectorLike } from "../util/vector";
 import { range } from "../util/math";
 
 export let terminal: Terminal;
-export type GridType = "empty" | "wall" | "dot" | "crate" | "crate on dot";
+export type GridType =
+  | "empty"
+  | "wall"
+  | "dot"
+  | "crate"
+  | "crate on dot"
+  | "floor";
 export let grid: GridType[][];
 export const angleOffsets: VectorLike[] = [
   { x: 1, y: 0 },
@@ -15,18 +22,19 @@ export const angleOffsets: VectorLike[] = [
 ];
 export const keeperPos = new Vector();
 export let keeperAngle = 0;
-const keeperPrefPos = new Vector();
-let size = new Vector();
-let offset = new Vector();
-const charToType: { [s: string]: GridType } = {
+export let size = new Vector();
+export let offset = new Vector();
+export const charToType: { [s: string]: GridType } = {
   " ": "empty",
   k: "empty",
+  f: "floor",
   w: "wall",
   d: "dot",
   K: "dot",
   c: "crate",
   C: "crate on dot"
 };
+const keeperPrefPos = new Vector();
 const typeToSymbol: { [g: string]: string } = {
   empty: " ",
   wall: "E",
@@ -44,10 +52,16 @@ let crateMovableStatusHashes: { [h: number]: boolean };
 
 export function init() {
   terminal = new Terminal(terminalSize);
+  generator.init();
 }
 
 export function start(count: number) {
-  const p = patterns[count].split("\n").slice(1, -1);
+  grid = range(terminalSize.x).map(() =>
+    range(terminalSize.y).map(() => "empty")
+  );
+  generator.generate(count);
+  keeperPos.set(1, 1);
+  /*const p = patterns[count].split("\n").slice(1, -1);
   size.set(0, p.length);
   p.forEach(l => {
     size.x = Math.max(l.length, size.x);
@@ -55,9 +69,6 @@ export function start(count: number) {
   offset
     .set((terminalSize.x - size.x) / 2, (terminalSize.y - size.y) / 2)
     .floor();
-  grid = range(terminalSize.x).map(() =>
-    range(terminalSize.y).map(() => "empty")
-  );
   p.forEach((l, y) => {
     l.split("").map((c, x) => {
       if (c === "k" || c === "K") {
@@ -65,7 +76,7 @@ export function start(count: number) {
       }
       grid[x + offset.x][y + offset.y] = charToType[c];
     });
-  });
+  });*/
   draw();
   keeperMovableGrid = range(terminalSize.x).map(() =>
     range(terminalSize.y).map(() => false)
