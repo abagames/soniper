@@ -96,6 +96,29 @@ export function generate(count: number) {
   floors.forEach(f => {
     grid[f.x][f.y] = "empty";
   });
+  let crateCandidates = reachableFloors.filter(
+    f => f.x !== keeperPos.x || f.y !== keeperPos.y
+  );
+  let cn = Math.floor(crateCandidates.length * random.get(0.05, 0.15)) + 1;
+  let lastCrate: Vector;
+  const crates: Vector[] = [];
+  while (cn > 0) {
+    if (random.get() < 0.01) {
+      lastCrate = undefined;
+    }
+    const ci = random.getInt(crateCandidates.length);
+    const cc = crateCandidates[ci];
+    if (
+      lastCrate == null ||
+      Math.abs(lastCrate.x - cc.x) + Math.abs(lastCrate.y - cc.y) === 1
+    ) {
+      grid[cc.x][cc.y] = "crate on dot";
+      crates.push(cc);
+      lastCrate = cc;
+      crateCandidates.splice(ci, 1);
+      cn--;
+    }
+  }
 }
 
 function getGridType(

@@ -26,12 +26,12 @@ ccppcc
  cppc
 `,
   `
- rppr
-rrpprr
+ bppb
+bbppbb
 pppppp
 pppppp
-rrpprr
- rppr
+bbppbb
+ bppb
 `,
   `
 brrbrr
