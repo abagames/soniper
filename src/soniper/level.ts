@@ -35,6 +35,7 @@ export const charToType: { [s: string]: GridType } = {
   c: "crate",
   C: "crate on dot"
 };
+export type MoveType = "push" | "pull";
 const keeperPrefPos = new Vector();
 const typeToSymbol: { [g: string]: string } = {
   empty: " ",
@@ -95,12 +96,12 @@ export function draw() {
   terminal.print(kc, keeperPos.x, keeperPos.y, { symbol: "s", rotation: rc });
 }
 
-export function getPath(sp: Vector, dp: Vector) {
+export function getPath(sp: Vector, dp: Vector, mt: MoveType) {
   if (!dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2)) {
     return;
   }
   keeperPrefPos.set(keeperPos);
-  const fa = getMovableAngles(sp);
+  const fa = getMovableAngles(sp, mt);
   removeCrate(sp);
   crateMovableStatuses = [{ path: [], pos: sp, angles: fa }];
   crateMovableStatusHashes = {};
@@ -117,8 +118,12 @@ export function getPath(sp: Vector, dp: Vector) {
         return;
       }
       setCrate(pos);
-      keeperPos.set(s.pos);
-      const na = getMovableAngles(pos);
+      if (mt === "push") {
+        keeperPos.set(s.pos);
+      } else {
+        keeperPos.set(pos.x + ao.x, pos.y + ao.y);
+      }
+      const na = getMovableAngles(pos, mt);
       removeCrate(pos);
       const nsh = objToHash({ pos, angles: na });
       if (na.length > 0 && !crateMovableStatusHashes[nsh]) {
@@ -141,12 +146,17 @@ export function getPath(sp: Vector, dp: Vector) {
   return;
 }
 
-export function getMovableAngles(p: VectorLike) {
-  const xw = checkWall(p.x - 1, p.y) || checkWall(p.x + 1, p.y);
-  const yw = checkWall(p.x, p.y - 1) || checkWall(p.x, p.y + 1);
-  let angles = xw ? (yw ? [] : [1, 3]) : yw ? [0, 2] : [0, 1, 2, 3];
-  if (angles.length === 0) {
-    return angles;
+export function getMovableAngles(p: VectorLike, mt: MoveType) {
+  let angles: number[];
+  if (mt === "push") {
+    const xw = checkWall(p.x - 1, p.y) || checkWall(p.x + 1, p.y);
+    const yw = checkWall(p.x, p.y - 1) || checkWall(p.x, p.y + 1);
+    angles = xw ? (yw ? [] : [1, 3]) : yw ? [0, 2] : [0, 1, 2, 3];
+    if (angles.length === 0) {
+      return angles;
+    }
+  } else {
+    angles = [0, 1, 2, 3];
   }
   for (let y = offset.y + 1; y < offset.y + size.y - 1; y++) {
     for (let x = offset.x + 1; x < offset.x + size.x - 1; x++) {
@@ -162,7 +172,14 @@ export function getMovableAngles(p: VectorLike) {
   }
   angles = angles.filter(a => {
     const ao = angleOffsets[a];
-    return keeperMovableGrid[p.x - ao.x][p.y - ao.y];
+    if (mt === "push") {
+      return keeperMovableGrid[p.x - ao.x][p.y - ao.y];
+    } else {
+      return (
+        keeperMovableGrid[p.x + ao.x][p.y + ao.y] &&
+        keeperMovableGrid[p.x + ao.x * 2][p.y + ao.y * 2]
+      );
+    }
   });
   return angles;
 }

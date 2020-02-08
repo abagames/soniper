@@ -90,7 +90,7 @@ function updateCursor() {
     const g = level.grid[cursorPos.x][cursorPos.y];
     if (isCrateClicked) {
       if (!prevCursorPos.equals(cursorPos)) {
-        cratePath = level.getPath(crateClickedPos, cursorPos);
+        cratePath = level.getPath(crateClickedPos, cursorPos, "push");
         isValidPos = cratePath != null;
         prevCursorPos.set(cursorPos);
       }
@@ -106,7 +106,7 @@ function updateCursor() {
       if (!prevCursorPos.equals(cursorPos)) {
         isValidPos =
           (g === "crate" || g === "crate on dot") &&
-          level.getMovableAngles(cursorPos).length > 0;
+          level.getMovableAngles(cursorPos, "push").length > 0;
         prevCursorPos.set(cursorPos);
       }
       const cc = isValidPos ? "H" : "I";
