@@ -1,5 +1,16 @@
 import { patterns as strPatterns } from "./templatePatterns";
-import { GridType, charToType, grid, size, offset, keeperPos } from "./level";
+import {
+  GridType,
+  charToType,
+  grid,
+  size,
+  offset,
+  keeperPos,
+  getPath,
+  angleOffsets,
+  removeCrate,
+  setCrate
+} from "./level";
 import { terminalSize } from "./main";
 import { range } from "../util/math";
 import { Vector } from "../util/vector";
@@ -32,19 +43,19 @@ export function generate(count: number) {
         for (let y = 0; y < 5; y++) {
           const c = pt[x][y];
           if (c !== "empty") {
-            const p = new Vector(
-              offset.x + 1 + px * 3 + x,
-              offset.y + 1 + py * 3 + y
-            );
-            grid[p.x][p.y] = c;
-            if (c === "floor") {
-              floors.push(p);
-            }
-            if (c === "wall") {
-              walls.push(p);
-            }
+            grid[offset.x + 1 + px * 3 + x][offset.y + 1 + py * 3 + y] = c;
           }
         }
+      }
+    }
+  }
+  for (let x = 0; x < terminalSize.x; x++) {
+    for (let y = 0; y < terminalSize.y; y++) {
+      const g = grid[x][y];
+      if (g === "floor") {
+        floors.push(new Vector(x, y));
+      } else if (g === "wall") {
+        walls.push(new Vector(x, y));
       }
     }
   }
@@ -101,7 +112,7 @@ export function generate(count: number) {
   );
   let cn = Math.floor(crateCandidates.length * random.get(0.05, 0.15)) + 1;
   let lastCrate: Vector;
-  const crates: Vector[] = [];
+  const crates: { pos: Vector; isMoved: boolean }[] = [];
   while (cn > 0) {
     if (random.get() < 0.01) {
       lastCrate = undefined;
@@ -113,12 +124,33 @@ export function generate(count: number) {
       Math.abs(lastCrate.x - cc.x) + Math.abs(lastCrate.y - cc.y) === 1
     ) {
       grid[cc.x][cc.y] = "crate on dot";
-      crates.push(cc);
+      crates.push({ pos: cc, isMoved: false });
       lastCrate = cc;
       crateCandidates.splice(ci, 1);
       cn--;
     }
   }
+  for (let i = 0; i < 99; i++) {
+    const c = random.select(crates);
+    const dp = random.select(reachableFloors);
+    if (c.pos.x === dp.x && c.pos.y == dp.y) {
+      continue;
+    }
+    const p = getPath(c.pos, dp, "pull");
+    if (p != null) {
+      removeCrate(c.pos);
+      c.pos.set(dp);
+      c.isMoved = true;
+      const la = angleOffsets[p[p.length - 1]];
+      keeperPos.set(c.pos.x + la.x, c.pos.y + la.y);
+      setCrate(c.pos);
+    }
+  }
+  crates.forEach(c => {
+    if (!c.isMoved) {
+      grid[c.pos.x][c.pos.y] = "empty";
+    }
+  });
 }
 
 function getGridType(

@@ -36,7 +36,7 @@ export const charToType: { [s: string]: GridType } = {
   C: "crate on dot"
 };
 export type MoveType = "push" | "pull";
-const keeperPrefPos = new Vector();
+const keeperPrevPos = new Vector();
 const typeToSymbol: { [g: string]: string } = {
   empty: " ",
   wall: "E",
@@ -61,6 +61,9 @@ export function start(count: number) {
   grid = range(terminalSize.x).map(() =>
     range(terminalSize.y).map(() => "empty")
   );
+  keeperMovableGrid = range(terminalSize.x).map(() =>
+    range(terminalSize.y).map(() => false)
+  );
   generator.generate(count);
   /*const p = patterns[count].split("\n").slice(1, -1);
   size.set(0, p.length);
@@ -79,9 +82,6 @@ export function start(count: number) {
     });
   });*/
   draw();
-  keeperMovableGrid = range(terminalSize.x).map(() =>
-    range(terminalSize.y).map(() => false)
-  );
 }
 
 export function draw() {
@@ -100,7 +100,7 @@ export function getPath(sp: Vector, dp: Vector, mt: MoveType) {
   if (!dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2)) {
     return;
   }
-  keeperPrefPos.set(keeperPos);
+  keeperPrevPos.set(keeperPos);
   const fa = getMovableAngles(sp, mt);
   removeCrate(sp);
   crateMovableStatuses = [{ path: [], pos: sp, angles: fa }];
@@ -137,12 +137,12 @@ export function getPath(sp: Vector, dp: Vector, mt: MoveType) {
     });
     if (result != null || crateMovableStatuses.length === 0) {
       setCrate(sp);
-      keeperPos.set(keeperPrefPos);
+      keeperPos.set(keeperPrevPos);
       return result;
     }
   }
   setCrate(sp);
-  keeperPos.set(keeperPrefPos);
+  keeperPos.set(keeperPrevPos);
   return;
 }
 
