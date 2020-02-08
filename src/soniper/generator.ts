@@ -1,5 +1,5 @@
 import { patterns as strPatterns } from "./templatePatterns";
-import { GridType, charToType, grid, size, offset } from "./level";
+import { GridType, charToType, grid, size, offset, keeperPos } from "./level";
 import { terminalSize } from "./main";
 import { range } from "../util/math";
 import { Vector } from "../util/vector";
@@ -23,39 +23,79 @@ export function generate(count: number) {
   offset
     .set((terminalSize.x - size.x) / 2, (terminalSize.y - size.y) / 2)
     .floor();
+  const floors: Vector[] = [];
+  const walls: Vector[] = [];
   for (let px = 0; px < ps.x; px++) {
     for (let py = 0; py < ps.y; py++) {
-      const p = patterns[random.getInt(patterns.length)][random.getInt(4)];
+      const pt = patterns[random.getInt(patterns.length)][random.getInt(4)];
       for (let x = 0; x < 5; x++) {
         for (let y = 0; y < 5; y++) {
-          const c = p[x][y];
+          const c = pt[x][y];
           if (c !== "empty") {
-            grid[offset.x + 1 + px * 3 + x][offset.y + 1 + py * 3 + y] = c;
-          }
-        }
-      }
-    }
-  }
-  for (let x = 0; x < terminalSize.x; x++) {
-    for (let y = 0; y < terminalSize.y; y++) {
-      if (grid[x][y] === "floor") {
-        for (let ox = -1; ox <= 1; ox++) {
-          for (let oy = -1; oy <= 1; oy++) {
-            if (grid[x + ox][y + oy] === "empty") {
-              grid[x + ox][y + oy] = "wall";
+            const p = new Vector(
+              offset.x + 1 + px * 3 + x,
+              offset.y + 1 + py * 3 + y
+            );
+            grid[p.x][p.y] = c;
+            if (c === "floor") {
+              floors.push(p);
+            }
+            if (c === "wall") {
+              walls.push(p);
             }
           }
         }
       }
     }
   }
-  for (let x = 0; x < terminalSize.x; x++) {
-    for (let y = 0; y < terminalSize.y; y++) {
-      if (grid[x][y] === "floor") {
-        grid[x][y] = "empty";
+  keeperPos.set(random.select(floors));
+  grid[keeperPos.x][keeperPos.y] = "floor reachable";
+  for (let i = 0; i < 99; i++) {
+    floors.forEach(f => {
+      [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+      ].forEach(o => {
+        if (grid[f.x + o[0]][f.y + o[1]] === "floor reachable") {
+          grid[f.x][f.y] = "floor reachable";
+        }
+      });
+    });
+  }
+  const reachableFloors = floors.filter(
+    f => grid[f.x][f.y] === "floor reachable"
+  );
+  reachableFloors.forEach(f => {
+    for (let ox = -1; ox <= 1; ox++) {
+      for (let oy = -1; oy <= 1; oy++) {
+        const p = new Vector(f).add(ox, oy);
+        if (grid[p.x][p.y] === "empty" || grid[p.x][p.y] === "floor") {
+          grid[p.x][p.y] = "wall";
+          walls.push(p);
+        }
       }
     }
+  });
+  for (let i = 0; i < 9; i++) {
+    walls.forEach(w => {
+      let isRemovable = true;
+      for (let ox = -1; ox <= 1; ox++) {
+        for (let oy = -1; oy <= 1; oy++) {
+          if (grid[w.x + ox][w.y + oy] === "floor reachable") {
+            isRemovable = false;
+          }
+        }
+      }
+      if (isRemovable) {
+        grid[w.x][w.y] = "empty";
+      }
+    });
   }
+  floors.forEach(f => {
+    grid[f.x][f.y] = "empty";
+  });
 }
 
 function getGridType(

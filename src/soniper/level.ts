@@ -12,7 +12,8 @@ export type GridType =
   | "dot"
   | "crate"
   | "crate on dot"
-  | "floor";
+  | "floor"
+  | "floor reachable";
 export let grid: GridType[][];
 export const angleOffsets: VectorLike[] = [
   { x: 1, y: 0 },
@@ -60,7 +61,6 @@ export function start(count: number) {
     range(terminalSize.y).map(() => "empty")
   );
   generator.generate(count);
-  keeperPos.set(1, 1);
   /*const p = patterns[count].split("\n").slice(1, -1);
   size.set(0, p.length);
   p.forEach(l => {

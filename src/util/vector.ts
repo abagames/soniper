@@ -13,30 +13,40 @@ export class Vector {
   x = 0;
   y = 0;
 
-  constructor(x: number | VectorLike = 0, y?: number) {
+  constructor(x?: number | VectorLike, y?: number) {
     this.set(x, y);
   }
 
-  set(x: number | VectorLike, y?: number) {
+  set(x: number | VectorLike = 0, y: number = 0) {
     if (isVectorLike(x)) {
       this.x = x.x;
       this.y = x.y;
       return this;
     }
     this.x = x;
-    this.y = y == null ? x : y;
+    this.y = y;
     return this;
   }
 
-  add(v: VectorLike) {
-    this.x += v.x;
-    this.y += v.y;
+  add(x: number | VectorLike, y?: number) {
+    if (isVectorLike(x)) {
+      this.x += x.x;
+      this.y += x.y;
+      return this;
+    }
+    this.x += x;
+    this.y += y;
     return this;
   }
 
-  sub(v: VectorLike) {
-    this.x -= v.x;
-    this.y -= v.y;
+  sub(x: number | VectorLike, y?: number) {
+    if (isVectorLike(x)) {
+      this.x -= x.x;
+      this.y -= x.y;
+      return this;
+    }
+    this.x -= x;
+    this.y -= y;
     return this;
   }
 
@@ -64,9 +74,9 @@ export class Vector {
     return this;
   }
 
-  addAngle(angle: number, value: number) {
-    this.x += Math.cos(angle) * value;
-    this.y += Math.sin(angle) * value;
+  addWithAngle(angle: number, length: number) {
+    this.x += Math.cos(angle) * length;
+    this.y += Math.sin(angle) * length;
     return this;
   }
 
