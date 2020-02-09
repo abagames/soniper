@@ -9,11 +9,12 @@ import {
   getPath,
   angleOffsets,
   removeCrate,
-  setCrate
+  setCrate,
+  clearGrid
 } from "./level";
 import { terminalSize } from "./main";
-import { range } from "../util/math";
-import { Vector } from "../util/vector";
+import { range, clamp } from "../util/math";
+import { Vector, VectorLike } from "../util/vector";
 import { Random } from "../util/random";
 
 const random = new Random();
@@ -28,8 +29,10 @@ export function init() {
   });
 }
 
-export function generate(count: number) {
-  const ps = new Vector(3, 3);
+export function generate(seed: number, partsSize: VectorLike) {
+  random.setSeed(seed);
+  clearGrid();
+  const ps = new Vector(partsSize.x, partsSize.y);
   size.set(ps.x * 3 + 4, ps.y * 3 + 4);
   offset
     .set((terminalSize.x - size.x) / 2, (terminalSize.y - size.y) / 2)
@@ -110,7 +113,7 @@ export function generate(count: number) {
   let crateCandidates = reachableFloors.filter(
     f => f.x !== keeperPos.x || f.y !== keeperPos.y
   );
-  let cn = Math.floor(crateCandidates.length * 0.2) + 1;
+  let cn = Math.floor(crateCandidates.length * 0.3) + 1;
   let lastPlacedCrate: Vector;
   type Crate = { pos: Vector; isMoved: boolean };
   const crates: Crate[] = [];
@@ -178,11 +181,15 @@ export function generate(count: number) {
       break;
     }
   }
+  let cc = 0;
   crates.forEach(c => {
     if (!c.isMoved) {
       grid[c.pos.x][c.pos.y] = "empty";
+    } else {
+      cc++;
     }
   });
+  return cc;
 }
 
 function getGridType(

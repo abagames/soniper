@@ -55,17 +55,16 @@ let crateMovableStatusHashes: { [h: number]: boolean };
 export function init() {
   terminal = new Terminal(terminalSize);
   generator.init();
-}
-
-export function start(count: number) {
   grid = range(terminalSize.x).map(() =>
     range(terminalSize.y).map(() => "empty")
   );
   keeperMovableGrid = range(terminalSize.x).map(() =>
     range(terminalSize.y).map(() => false)
   );
-  generator.generate(count);
-  /*const p = patterns[count].split("\n").slice(1, -1);
+}
+
+export function setFromPatterns(count: number) {
+  const p = patterns[count].split("\n").slice(1, -1);
   size.set(0, p.length);
   p.forEach(l => {
     size.x = Math.max(l.length, size.x);
@@ -80,8 +79,15 @@ export function start(count: number) {
       }
       grid[x + offset.x][y + offset.y] = charToType[c];
     });
-  });*/
-  draw();
+  });
+}
+
+export function clearGrid() {
+  for (let x = 0; x < terminalSize.x; x++) {
+    for (let y = 0; y < terminalSize.y; y++) {
+      grid[x][y] = "empty";
+    }
+  }
 }
 
 export function draw() {

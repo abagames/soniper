@@ -1,13 +1,15 @@
 import * as level from "./level";
+import * as generator from "./generator";
 import * as charPatterns from "./charPatterns";
 import * as main from "../util/main";
 import * as view from "../util/view";
 import * as text from "../util/text";
 import { Terminal } from "../util/terminal";
 import * as pointer from "../util/pointer";
-import * as actor from "../util/actor";
-import * as sound from "sounds-some-sounds";
 import { Vector, VectorLike } from "../util/vector";
+import { Random } from "../util/random";
+import * as sound from "sounds-some-sounds";
+import { clamp } from "../util/math";
 
 export const terminalSize = new Vector(25, 18);
 type State = "title" | "inGame" | "gameOver";
@@ -32,6 +34,12 @@ let moveAnimations: {
   angle?: number;
 }[][];
 let moveAnimationTicks: number;
+let levelCount: number;
+let levelPartsSize = new Vector();
+let levelGeneratingCount: number;
+let levelGeneratingMaxCrateCount: number;
+let levelGeneratingMaxCrateIndex: number;
+const random = new Random();
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -52,7 +60,7 @@ function update() {
   view.clear();
   level.terminal.draw();
   updateFunc[state]();
-  actor.update();
+  //actor.update();
   terminal.draw();
   ticks++;
 }
@@ -60,17 +68,54 @@ function update() {
 function initInGame() {
   //sound.playJingle("l");
   state = "inGame";
-  actor.reset();
+  //actor.reset();
   ticks = 0;
   isCrateClicked = false;
   isValidPos = false;
   prevCursorPos.set(-1);
   moveAnimations = [];
-  level.start(0);
+  levelCount = 10;
+  initLevel();
+  //level.start(10);
   //actor.spawn(player);
 }
 
+function initLevel() {
+  levelGeneratingCount = 0;
+  levelGeneratingMaxCrateCount = -1;
+  random.setSeed(levelCount);
+  levelPartsSize.set(
+    clamp(Math.floor(Math.sqrt(levelCount * 1.2)), 2, 6),
+    clamp(Math.floor(Math.sqrt(levelCount * 0.7)), 2, 4)
+  );
+}
+
 function updateInGame() {
+  if (levelGeneratingCount >= 0) {
+    if (levelGeneratingCount === 16) {
+      if (levelGeneratingMaxCrateCount <= 0) {
+        level.setFromPatterns(0);
+      } else {
+        generator.generate(
+          levelCount * 179 + levelGeneratingMaxCrateIndex * 1087,
+          levelPartsSize
+        );
+      }
+      levelGeneratingCount = -1;
+      level.draw();
+      return;
+    }
+    const cc = generator.generate(
+      levelCount * 179 + levelGeneratingCount * 1087,
+      levelPartsSize
+    );
+    if (cc > levelGeneratingMaxCrateCount) {
+      levelGeneratingMaxCrateCount = cc;
+      levelGeneratingMaxCrateIndex = levelGeneratingCount;
+    }
+    levelGeneratingCount++;
+    return;
+  }
   if (moveAnimations.length > 0) {
     animateMove();
   } else {
