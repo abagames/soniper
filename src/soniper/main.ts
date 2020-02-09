@@ -49,7 +49,6 @@ main.init(init, update, {
 function init() {
   sound.init(205);
   terminal = new Terminal(terminalSize);
-  //actor.setActorClass(Actor);
   charPatterns.init();
   level.init();
   initInGame();
@@ -60,7 +59,6 @@ function update() {
   view.clear();
   level.terminal.draw();
   updateFunc[state]();
-  //actor.update();
   terminal.draw();
   ticks++;
 }
@@ -68,7 +66,6 @@ function update() {
 function initInGame() {
   //sound.playJingle("l");
   state = "inGame";
-  //actor.reset();
   ticks = 0;
   isCrateClicked = false;
   isValidPos = false;
@@ -76,8 +73,6 @@ function initInGame() {
   moveAnimations = [];
   levelCount = 10;
   initLevel();
-  //level.start(10);
-  //actor.spawn(player);
 }
 
 function initLevel() {
