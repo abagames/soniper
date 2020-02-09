@@ -110,40 +110,72 @@ export function generate(count: number) {
   let crateCandidates = reachableFloors.filter(
     f => f.x !== keeperPos.x || f.y !== keeperPos.y
   );
-  let cn = Math.floor(crateCandidates.length * random.get(0.05, 0.15)) + 1;
-  let lastCrate: Vector;
-  const crates: { pos: Vector; isMoved: boolean }[] = [];
+  let cn = Math.floor(crateCandidates.length * 0.2) + 1;
+  let lastPlacedCrate: Vector;
+  type Crate = { pos: Vector; isMoved: boolean };
+  const crates: Crate[] = [];
   while (cn > 0) {
     if (random.get() < 0.01) {
-      lastCrate = undefined;
+      lastPlacedCrate = undefined;
     }
     const ci = random.getInt(crateCandidates.length);
     const cc = crateCandidates[ci];
     if (
-      lastCrate == null ||
-      Math.abs(lastCrate.x - cc.x) + Math.abs(lastCrate.y - cc.y) === 1
+      lastPlacedCrate == null ||
+      Math.abs(lastPlacedCrate.x - cc.x) +
+        Math.abs(lastPlacedCrate.y - cc.y) ===
+        1
     ) {
       grid[cc.x][cc.y] = "crate on dot";
       crates.push({ pos: cc, isMoved: false });
-      lastCrate = cc;
+      lastPlacedCrate = cc;
       crateCandidates.splice(ci, 1);
       cn--;
     }
   }
-  for (let i = 0; i < 99; i++) {
-    const c = random.select(crates);
-    const dp = random.select(reachableFloors);
-    if (c.pos.x === dp.x && c.pos.y == dp.y) {
-      continue;
+  let lastMovedCrate: Crate;
+  let isLastCrateMoved: boolean;
+  const lastMovedCrateSourcePos = new Vector();
+  const lastKeeperPos = new Vector();
+  for (let j = 0; j < 16; j++) {
+    for (let i = 0; i < 64; i++) {
+      const c = random.select(crates);
+      const dp = random.select(reachableFloors);
+      if (c.pos.x === dp.x && c.pos.y == dp.y) {
+        continue;
+      }
+      const p = getPath(c.pos, dp, "pull");
+      if (p != null) {
+        lastMovedCrate = c;
+        lastMovedCrateSourcePos.set(c.pos);
+        lastKeeperPos.set(keeperPos);
+        isLastCrateMoved = c.isMoved;
+        removeCrate(c.pos);
+        c.pos.set(dp);
+        c.isMoved = true;
+        const la = angleOffsets[p[p.length - 1]];
+        keeperPos.set(c.pos.x + la.x, c.pos.y + la.y);
+        setCrate(c.pos);
+      }
     }
-    const p = getPath(c.pos, dp, "pull");
-    if (p != null) {
-      removeCrate(c.pos);
-      c.pos.set(dp);
-      c.isMoved = true;
-      const la = angleOffsets[p[p.length - 1]];
-      keeperPos.set(c.pos.x + la.x, c.pos.y + la.y);
-      setCrate(c.pos);
+    if (lastMovedCrate != null) {
+      removeCrate(lastMovedCrate.pos);
+      setCrate(lastMovedCrateSourcePos);
+      keeperPos.set(lastKeeperPos);
+      lastMovedCrate.pos.set(lastMovedCrateSourcePos);
+      lastMovedCrate.isMoved = isLastCrateMoved;
+      lastMovedCrate = undefined;
+    }
+    for (let i = 0; i < crates.length; i++) {
+      const c = crates[i];
+      if (!c.isMoved) {
+        grid[c.pos.x][c.pos.y] = "empty";
+        crates.splice(i, 1);
+        break;
+      }
+    }
+    if (crates.length === 0) {
+      break;
     }
   }
   crates.forEach(c => {
