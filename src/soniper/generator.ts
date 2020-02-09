@@ -152,7 +152,7 @@ function moveCrates({ reachableFloors }) {
   let isLastCrateMoved: boolean;
   const lastMovedCrateSourcePos = new Vector();
   const lastKeeperPos = new Vector();
-  for (let j = 0; j < 16; j++) {
+  for (let j = 0; j < 32; j++) {
     for (let i = 0; i < 64; i++) {
       const c = random.select(crates);
       const dp = random.select(reachableFloors);
