@@ -103,7 +103,10 @@ export function draw() {
 }
 
 export function getPath(sp: Vector, dp: Vector, mt: MoveType) {
-  if (!dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2)) {
+  if (
+    !dp.isInRect(offset.x + 1, offset.y + 1, size.x - 2, size.y - 2) ||
+    sp.equals(dp)
+  ) {
     return;
   }
   keeperPrevPos.set(keeperPos);

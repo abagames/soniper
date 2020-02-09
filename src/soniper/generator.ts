@@ -154,9 +154,9 @@ function moveCrates({ reachableFloors }) {
   const lastKeeperPos = new Vector();
   for (let j = 0; j < 32; j++) {
     for (let i = 0; i < 64; i++) {
-      const c = random.select(crates);
+      const c: Crate = random.select(crates);
       const dp = random.select(reachableFloors);
-      if (c.pos.x === dp.x && c.pos.y == dp.y) {
+      if (c.pos.equals(dp)) {
         continue;
       }
       const p = getPath(c.pos, dp, "pull");
