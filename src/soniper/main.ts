@@ -44,6 +44,13 @@ let levelGeneratingMaxCrateIndex: number;
 const random = new Random();
 let resetButton: Button;
 let undoButton: Button;
+type UndoHistory = {
+  crateSourcePos: Vector;
+  crateDestinationPos: Vector;
+  keeperPos: Vector;
+  keeperAngle: number;
+};
+let undoHistories: UndoHistory[];
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -71,25 +78,25 @@ function initInGame() {
   //sound.playJingle("l");
   state = "inGame";
   ticks = 0;
-  isCrateClicked = false;
-  isValidPos = false;
-  prevCursorPos.set(-1);
-  moveAnimations = [];
-  levelCount = 10;
   resetButton = button.get({
     pos: new Vector(118, 1),
     text: "RESET",
-    onClick: () => {}
+    onClick: reset
   });
   undoButton = button.get({
     pos: new Vector(118, 100),
     text: "UNDO",
-    onClick: () => {}
+    onClick: undo
   });
+  levelCount = 10;
   initLevel();
 }
 
 function initLevel() {
+  isCrateClicked = false;
+  isValidPos = false;
+  prevCursorPos.set(-1);
+  moveAnimations = [];
   levelGeneratingCount = 0;
   levelGeneratingMaxCrateCount = -1;
   random.setSeed(levelCount);
@@ -97,6 +104,7 @@ function initLevel() {
     clamp(Math.floor(Math.sqrt(levelCount * 1.2)), 2, 6),
     clamp(Math.floor(Math.sqrt(levelCount * 0.7)), 2, 4)
   );
+  undoHistories = [];
 }
 
 function updateInGame() {
@@ -129,9 +137,11 @@ function updateInGame() {
     animateMove();
   } else {
     updateCursor();
+    if (undoHistories.length > 0) {
+      button.update(resetButton);
+      button.update(undoButton);
+    }
   }
-  button.update(resetButton);
-  button.update(undoButton);
   /*if (ticks === 150) {
     sound.playBgm();
   }*/
@@ -154,6 +164,12 @@ function updateCursor() {
       text.print(cc, cursorPos.x * 6, cursorPos.y * 6, { symbol: "s" });
       if (pointer.isJustReleased) {
         if (cratePath != null) {
+          undoHistories.push({
+            crateSourcePos: new Vector(crateClickedPos),
+            crateDestinationPos: new Vector(cursorPos),
+            keeperPos: new Vector(level.keeperPos),
+            keeperAngle: level.keeperAngle
+          });
           setMoveAnimation(cratePath, crateClickedPos);
         }
         isCrateClicked = false;
@@ -273,6 +289,31 @@ function setMoveAnimation(angles: number[], cratePos: Vector) {
       }
     ]);
   }
+}
+
+function reset() {
+  if (undoHistories.length === 0 || moveAnimations.length > 0) {
+    return;
+  }
+  while (undoHistories.length > 0) {
+    undoOnce();
+  }
+  level.draw();
+}
+
+function undo() {
+  if (undoHistories.length === 0 || moveAnimations.length > 0) {
+    return;
+  }
+  undoOnce();
+  level.draw();
+}
+
+function undoOnce() {
+  const h = undoHistories.pop();
+  level.removeCrate(h.crateDestinationPos);
+  level.setCrate(h.crateSourcePos);
+  level.setKeeper(h.keeperPos, h.keeperAngle);
 }
 
 function initTitle() {
