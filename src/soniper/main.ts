@@ -1,6 +1,8 @@
 import * as level from "./level";
 import * as generator from "./generator";
 import * as charPatterns from "./charPatterns";
+import * as button from "./button";
+import { Button } from "./button";
 import * as main from "../util/main";
 import * as view from "../util/view";
 import * as text from "../util/text";
@@ -8,8 +10,8 @@ import { Terminal } from "../util/terminal";
 import * as pointer from "../util/pointer";
 import { Vector, VectorLike } from "../util/vector";
 import { Random } from "../util/random";
-import * as sound from "sounds-some-sounds";
 import { clamp } from "../util/math";
+import * as sound from "sounds-some-sounds";
 
 export const terminalSize = new Vector(25, 18);
 type State = "title" | "inGame" | "gameOver";
@@ -40,6 +42,8 @@ let levelGeneratingCount: number;
 let levelGeneratingMaxCrateCount: number;
 let levelGeneratingMaxCrateIndex: number;
 const random = new Random();
+let resetButton: Button;
+let undoButton: Button;
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -72,6 +76,16 @@ function initInGame() {
   prevCursorPos.set(-1);
   moveAnimations = [];
   levelCount = 10;
+  resetButton = button.get({
+    pos: new Vector(118, 1),
+    text: "RESET",
+    onClick: () => {}
+  });
+  undoButton = button.get({
+    pos: new Vector(118, 100),
+    text: "UNDO",
+    onClick: () => {}
+  });
   initLevel();
 }
 
@@ -116,6 +130,8 @@ function updateInGame() {
   } else {
     updateCursor();
   }
+  button.update(resetButton);
+  button.update(undoButton);
   /*if (ticks === 150) {
     sound.playBgm();
   }*/
