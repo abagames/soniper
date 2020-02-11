@@ -1,9 +1,5 @@
-# soniper
+# soniper ([DEMO](https://abagames.github.io/soniper/))
 
-Sonic warehouse keeper.
+Drag a crate to a destination position. A warehouse keeper searches a route and moves automatically.
 
-## Demo
-
-[SONIPER](https://abagames.github.io/soniper/soniper/)
-
-[![SONIPER screenshot](docs/screenshots/soniper.gif)](https://abagames.github.io/soinper/soniper/)
+[![SONIPER screenshot](docs/screenshots/screenshot.gif)](https://abagames.github.io/soinper/)
