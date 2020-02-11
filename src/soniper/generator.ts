@@ -10,10 +10,11 @@ import {
   angleOffsets,
   removeCrate,
   setCrate,
-  clearGrid
+  clearGrid,
+  setKeeper
 } from "./level";
 import { terminalSize } from "./main";
-import { range, clamp } from "../util/math";
+import { range } from "../util/math";
 import { Vector, VectorLike } from "../util/vector";
 import { Random } from "../util/random";
 
@@ -67,7 +68,7 @@ function generateFloors(ps: VectorLike) {
       }
     }
   }
-  keeperPos.set(random.select(floors));
+  setKeeper(random.select(floors), 0);
   grid[keeperPos.x][keeperPos.y] = "floor reachable";
   for (let i = 0; i < 99; i++) {
     floors.forEach(f => {

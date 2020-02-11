@@ -36,7 +36,6 @@ export const charToType: { [s: string]: GridType } = {
   C: "crate on dot"
 };
 export type MoveType = "push" | "pull";
-const keeperPrevPos = new Vector();
 const typeToSymbol: { [g: string]: string } = {
   empty: " ",
   wall: "E",
@@ -45,12 +44,6 @@ const typeToSymbol: { [g: string]: string } = {
   "crate on dot": "D"
 };
 let keeperMovableGrid: boolean[][];
-let crateMovableStatuses: {
-  path: number[];
-  pos: VectorLike;
-  angles: number[];
-}[];
-let crateMovableStatusHashes: { [h: number]: boolean };
 
 export function init() {
   terminal = new Terminal(terminalSize);
@@ -86,6 +79,7 @@ export function clearGrid() {
   for (let x = 0; x < terminalSize.x; x++) {
     for (let y = 0; y < terminalSize.y; y++) {
       grid[x][y] = "empty";
+      keeperMovableGrid[x][y] = false;
     }
   }
 }
@@ -109,11 +103,15 @@ export function getPath(sp: Vector, dp: Vector, mt: MoveType) {
   ) {
     return;
   }
-  keeperPrevPos.set(keeperPos);
+  const keeperPrevPos = new Vector(keeperPos);
   const fa = getMovableAngles(sp, mt);
   removeCrate(sp);
-  crateMovableStatuses = [{ path: [], pos: sp, angles: fa }];
-  crateMovableStatusHashes = {};
+  let crateMovableStatuses: {
+    path: number[];
+    pos: VectorLike;
+    angles: number[];
+  }[] = [{ path: [], pos: sp, angles: fa }];
+  let crateMovableStatusHashes: { [h: number]: boolean } = {};
   crateMovableStatusHashes[objToHash({ pos: sp, angles: fa })] = true;
   let result;
   for (let i = 0; i < 99; i++) {
@@ -243,11 +241,13 @@ function checkMovable(x, y) {
 
 export function removeCrate(p) {
   const g = grid[p.x][p.y];
+  if (g !== "crate" && g !== "crate on dot") console.error("no crate");
   grid[p.x][p.y] = g === "crate on dot" ? "dot" : "empty";
 }
 
 export function setCrate(p) {
   const g = grid[p.x][p.y];
+  if (g === "crate" || g === "crate on dot") console.error("crate");
   grid[p.x][p.y] = g === "dot" ? "crate on dot" : "crate";
 }
 

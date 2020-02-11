@@ -117,47 +117,50 @@ function initLevel() {
 
 function updateInGame() {
   if (levelGeneratingCount >= 0) {
-    if (levelGeneratingCount === 16) {
-      if (levelGeneratingMaxCrateCount <= 0) {
-        level.setFromPatterns(0);
-      } else {
-        generator.generate(
-          levelCount * 179 + levelGeneratingMaxCrateIndex * 1087 + baseSeed,
-          levelPartsSize
-        );
-      }
-      levelGeneratingCount = -1;
-      level.draw();
-      terminal.clear();
-      sound.playJingle("l0", false, 57, 8);
-      return;
-    }
-    const cc = generator.generate(
-      levelCount * 179 + levelGeneratingCount * 1087 + baseSeed,
-      levelPartsSize
-    );
-    if (cc > levelGeneratingMaxCrateCount) {
-      levelGeneratingMaxCrateCount = cc;
-      levelGeneratingMaxCrateIndex = levelGeneratingCount;
-    }
-    levelGeneratingCount++;
-    terminal.print(`GENERATING ${levelGeneratingCount} / 16`, 1, 0);
+    generateLevel();
     return;
   }
-  if (ticks < 60) {
-    terminal.print(`LEVEL ${levelCount}`, 1, 0);
-  } else if (ticks === 60) {
+  if (ticks === 60) {
     terminal.clear();
   }
   if (moveAnimations.length > 0) {
     animateMove();
   } else {
-    updateCursor();
     if (undoHistories.length > 0) {
       button.update(resetButton);
       button.update(undoButton);
     }
+    updateCursor();
   }
+}
+
+function generateLevel() {
+  if (levelGeneratingCount === 16) {
+    if (levelGeneratingMaxCrateCount <= 0) {
+      level.setFromPatterns(0);
+    } else {
+      generator.generate(
+        levelCount * 179 + levelGeneratingMaxCrateIndex * 1087 + baseSeed,
+        levelPartsSize
+      );
+    }
+    levelGeneratingCount = -1;
+    level.draw();
+    terminal.clear();
+    terminal.print(`LEVEL ${levelCount}`, 1, 0);
+    sound.playJingle("l0", false, 57, 8);
+    return;
+  }
+  const cc = generator.generate(
+    levelCount * 179 + levelGeneratingCount * 1087 + baseSeed,
+    levelPartsSize
+  );
+  if (cc > levelGeneratingMaxCrateCount) {
+    levelGeneratingMaxCrateCount = cc;
+    levelGeneratingMaxCrateIndex = levelGeneratingCount;
+  }
+  levelGeneratingCount++;
+  terminal.print(`GENERATING ${levelGeneratingCount} / 16`, 1, 0);
 }
 
 function updateCursor() {
@@ -187,6 +190,7 @@ function updateCursor() {
           sound.play("s_rel");
         }
         isCrateClicked = false;
+        prevCursorPos.set(-1, -1);
       }
     } else {
       if (!prevCursorPos.equals(cursorPos)) {
@@ -200,6 +204,8 @@ function updateCursor() {
       if (isValidPos && pointer.isJustPressed) {
         crateClickedPos.set(cursorPos);
         isCrateClicked = true;
+        cratePath = null;
+        isValidPos = false;
         sound.play("s_prs");
       }
     }
