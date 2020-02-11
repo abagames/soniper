@@ -60,7 +60,8 @@ main.init(init, update, {
 });
 
 function init() {
-  sound.init(205);
+  sound.init(306);
+  sound.setQuantize(0);
   terminal = new Terminal(terminalSize);
   charPatterns.init();
   level.init();
@@ -94,7 +95,6 @@ function initInGame() {
 }
 
 function initLevel() {
-  //sound.playJingle("l");
   state = "inGame";
   ticks = 0;
   saveLevelCount(levelCount);
@@ -129,6 +129,7 @@ function updateInGame() {
       levelGeneratingCount = -1;
       level.draw();
       terminal.clear();
+      sound.playJingle("l0", false, 57, 8);
       return;
     }
     const cc = generator.generate(
@@ -157,9 +158,6 @@ function updateInGame() {
       button.update(undoButton);
     }
   }
-  /*if (ticks === 150) {
-    sound.playBgm();
-  }*/
 }
 
 function updateCursor() {
@@ -186,6 +184,7 @@ function updateCursor() {
             keeperAngle: level.keeperAngle
           });
           setMoveAnimation(cratePath, crateClickedPos);
+          sound.play("s_rel");
         }
         isCrateClicked = false;
       }
@@ -201,6 +200,7 @@ function updateCursor() {
       if (isValidPos && pointer.isJustPressed) {
         crateClickedPos.set(cursorPos);
         isCrateClicked = true;
+        sound.play("s_prs");
       }
     }
   }
@@ -227,6 +227,7 @@ function animateMove() {
             level.setCrate(a.pos);
           } else {
             level.setKeeper(a.pos, a.angle);
+            sound.play("h_kp");
           }
         }
       });
@@ -313,6 +314,7 @@ function reset() {
   if (undoHistories.length === 0 || moveAnimations.length > 0) {
     return;
   }
+  sound.play("s_res");
   while (undoHistories.length > 0) {
     undoOnce();
   }
@@ -323,6 +325,7 @@ function undo() {
   if (undoHistories.length === 0 || moveAnimations.length > 0) {
     return;
   }
+  sound.play("s_und");
   undoOnce();
   level.draw();
 }
@@ -340,8 +343,10 @@ function initSolved() {
   if (levelCount === clearLevelCount) {
     terminal.print(`${levelCount} LEVELS ARE SOLVED!`, 1, 0);
     terminal.print("CONGRATULATIONS!", 1, 1);
+    sound.playJingle("s_cng", false, 69);
   } else {
     terminal.print("SOLVED", 1, 0);
+    sound.playJingle("l1", false, 69, 8);
   }
 }
 
