@@ -52,6 +52,7 @@ type UndoHistory = {
 let undoHistories: UndoHistory[];
 const baseSeed = 2;
 const clearLevelCount = 30;
+const localStorageKey = "soniper-100";
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -85,19 +86,18 @@ function update() {
 }
 
 function initInGame() {
-  //sound.playJingle("l");
-  levelCount = 0;
-  gotoNextLevel();
-}
-
-function gotoNextLevel() {
-  state = "inGame";
-  ticks = 0;
-  levelCount++;
+  levelCount = loadLevelCount();
+  if (levelCount == null) {
+    levelCount = 1;
+  }
   initLevel();
 }
 
 function initLevel() {
+  //sound.playJingle("l");
+  state = "inGame";
+  ticks = 0;
+  saveLevelCount(levelCount);
   isCrateClicked = false;
   isValidPos = false;
   prevCursorPos.set(-1);
@@ -347,6 +347,63 @@ function initSolved() {
 
 function updateSolved() {
   if (ticks > (levelCount === clearLevelCount ? 300 : 60)) {
-    gotoNextLevel();
+    levelCount++;
+    initLevel();
   }
+}
+
+function loadLevelCount() {
+  let count = loadFromUrl();
+  if (count == null) {
+    try {
+      const data = JSON.parse(localStorage.getItem(localStorageKey));
+      count = data.levelCount;
+    } catch {}
+  }
+  if (count == null) {
+    return undefined;
+  }
+  count = Math.floor(count);
+  if (count < 1) {
+    count = 1;
+  }
+  return count;
+}
+
+function loadFromUrl() {
+  const query = window.location.search.substring(1);
+  if (query == null) {
+    return undefined;
+  }
+  let params = query.split("&");
+  let levelCountStr: string;
+  for (let i = 0; i < params.length; i++) {
+    const param = params[i];
+    const pair = param.split("=");
+    if (pair[0] === "l") {
+      levelCountStr = pair[1];
+    }
+  }
+  if (levelCountStr == null) {
+    return undefined;
+  }
+  return Number(levelCountStr);
+}
+
+function saveLevelCount(count: number) {
+  saveAsUrl(count);
+  try {
+    localStorage.setItem(
+      localStorageKey,
+      JSON.stringify({ levelCount: count })
+    );
+  } catch {}
+}
+
+function saveAsUrl(count: number) {
+  const baseUrl = window.location.href.split("?")[0];
+  let url = `${baseUrl}?l=${count}`;
+  try {
+    window.history.replaceState({}, "", url);
+  } catch (e) {}
 }
