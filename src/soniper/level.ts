@@ -256,6 +256,18 @@ export function setKeeper(p, a) {
   keeperAngle = a;
 }
 
+export function checkSolved() {
+  let cc = 0;
+  for (let y = offset.y; y < offset.y + size.y; y++) {
+    for (let x = offset.x; x < offset.x + size.x; x++) {
+      if (grid[x][y] === "crate") {
+        cc++;
+      }
+    }
+  }
+  return cc === 0;
+}
+
 function objToHash(o) {
   const s = JSON.stringify(o);
   let hash = 0;

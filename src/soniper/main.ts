@@ -14,12 +14,11 @@ import { clamp } from "../util/math";
 import * as sound from "sounds-some-sounds";
 
 export const terminalSize = new Vector(25, 18);
-type State = "title" | "inGame" | "gameOver";
+type State = "inGame" | "solved";
 let state: State;
 let updateFunc = {
-  title: updateTitle,
   inGame: updateInGame,
-  gameOver: updateGameOver
+  solved: updateSolved
 };
 let ticks = 0;
 let terminal: Terminal;
@@ -51,6 +50,8 @@ type UndoHistory = {
   keeperAngle: number;
 };
 let undoHistories: UndoHistory[];
+const baseSeed = 2;
+const clearLevelCount = 30;
 
 main.init(init, update, {
   viewSize: { x: 25 * 6, y: 18 * 6 },
@@ -62,8 +63,17 @@ function init() {
   terminal = new Terminal(terminalSize);
   charPatterns.init();
   level.init();
+  resetButton = button.get({
+    pos: new Vector(118, 1),
+    text: "RESET",
+    onClick: reset
+  });
+  undoButton = button.get({
+    pos: new Vector(118, 100),
+    text: "UNDO",
+    onClick: undo
+  });
   initInGame();
-  //initTitle();
 }
 
 function update() {
@@ -76,19 +86,14 @@ function update() {
 
 function initInGame() {
   //sound.playJingle("l");
+  levelCount = 0;
+  gotoNextLevel();
+}
+
+function gotoNextLevel() {
   state = "inGame";
   ticks = 0;
-  resetButton = button.get({
-    pos: new Vector(118, 1),
-    text: "RESET",
-    onClick: reset
-  });
-  undoButton = button.get({
-    pos: new Vector(118, 100),
-    text: "UNDO",
-    onClick: undo
-  });
-  levelCount = 10;
+  levelCount++;
   initLevel();
 }
 
@@ -105,6 +110,9 @@ function initLevel() {
     clamp(Math.floor(Math.sqrt(levelCount * 0.7)), 2, 4)
   );
   undoHistories = [];
+  terminal.clear();
+  level.terminal.clear();
+  ticks = 0;
 }
 
 function updateInGame() {
@@ -114,16 +122,17 @@ function updateInGame() {
         level.setFromPatterns(0);
       } else {
         generator.generate(
-          levelCount * 179 + levelGeneratingMaxCrateIndex * 1087,
+          levelCount * 179 + levelGeneratingMaxCrateIndex * 1087 + baseSeed,
           levelPartsSize
         );
       }
       levelGeneratingCount = -1;
       level.draw();
+      terminal.clear();
       return;
     }
     const cc = generator.generate(
-      levelCount * 179 + levelGeneratingCount * 1087,
+      levelCount * 179 + levelGeneratingCount * 1087 + baseSeed,
       levelPartsSize
     );
     if (cc > levelGeneratingMaxCrateCount) {
@@ -131,7 +140,13 @@ function updateInGame() {
       levelGeneratingMaxCrateIndex = levelGeneratingCount;
     }
     levelGeneratingCount++;
+    terminal.print(`GENERATING ${levelGeneratingCount} / 16`, 1, 0);
     return;
+  }
+  if (ticks < 60) {
+    terminal.print(`LEVEL ${levelCount}`, 1, 0);
+  } else if (ticks === 60) {
+    terminal.clear();
   }
   if (moveAnimations.length > 0) {
     animateMove();
@@ -220,6 +235,9 @@ function animateMove() {
   }
   level.draw();
   if (moveAnimations.length === 0) {
+    if (level.checkSolved()) {
+      initSolved();
+    }
     return;
   }
   moveAnimations[0].forEach(a => {
@@ -316,32 +334,19 @@ function undoOnce() {
   level.setKeeper(h.keeperPos, h.keeperAngle);
 }
 
-function initTitle() {
-  state = "title";
+function initSolved() {
+  state = "solved";
   ticks = 0;
-}
-
-function updateTitle() {
-  terminal.print(" SONIPER ", 5, 3, { color: "l", backgroundColor: "w" });
-  if (ticks > 30) {
-  }
-  if (pointer.isJustPressed) {
-    initInGame();
+  if (levelCount === clearLevelCount) {
+    terminal.print(`${levelCount} LEVELS ARE SOLVED!`, 1, 0);
+    terminal.print("CONGRATULATIONS!", 1, 1);
+  } else {
+    terminal.print("SOLVED", 1, 0);
   }
 }
 
-function initGameOver() {
-  sound.stopBgm();
-  state = "gameOver";
-  pointer.clearJustPressed();
-  ticks = 0;
-}
-
-function updateGameOver() {
-  terminal.print(" GAME OVER ", 4, 3, { color: "l", backgroundColor: "w" });
-  if (ticks > 20 && pointer.isJustPressed) {
-    initInGame();
-  } else if (ticks > 300) {
-    initTitle();
+function updateSolved() {
+  if (ticks > (levelCount === clearLevelCount ? 300 : 60)) {
+    gotoNextLevel();
   }
 }
