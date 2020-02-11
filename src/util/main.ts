@@ -10,7 +10,6 @@ export type Options = {
   viewBackground?: string;
   isUsingVirtualPad?: boolean;
   isFourWaysStick?: boolean;
-  isCapturing?: boolean;
 };
 
 let lastFrameTime = 0;
@@ -21,8 +20,7 @@ const defaultOptions: Options = {
   bodyBackground: "#111",
   viewBackground: "black",
   isUsingVirtualPad: true,
-  isFourWaysStick: false,
-  isCapturing: false
+  isFourWaysStick: false
 };
 let options: Options;
 let textCacheEnableTicks = 10;
@@ -39,12 +37,7 @@ export function init(
 }
 
 function onLoad() {
-  view.init(
-    options.viewSize,
-    options.bodyBackground,
-    options.viewBackground,
-    options.isCapturing
-  );
+  view.init(options.viewSize, options.bodyBackground, options.viewBackground);
   input.init(options.isUsingVirtualPad, options.isFourWaysStick);
   text.init();
   _init();
@@ -63,9 +56,6 @@ function update() {
   input.update();
   _update();
   input.draw();
-  if (options.isCapturing) {
-    view.capture();
-  }
   textCacheEnableTicks--;
   if (textCacheEnableTicks === 0) {
     text.enableCache();

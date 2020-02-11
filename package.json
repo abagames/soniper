@@ -17,7 +17,6 @@
     "typescript": "^3.6.4"
   },
   "dependencies": {
-    "gif-capture-canvas": "^1.0.1",
     "sounds-some-sounds": "^1.0.5"
   }
 }

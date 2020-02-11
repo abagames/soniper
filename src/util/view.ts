@@ -1,5 +1,4 @@
 import { Vector, VectorLike } from "./vector";
-import * as gcc from "gif-capture-canvas";
 
 export const size = new Vector();
 export let canvas: HTMLCanvasElement;
@@ -16,16 +15,12 @@ image-rendering: -webkit-optimize-contrast;
 image-rendering: -o-crisp-edges;
 image-rendering: pixelated;
 `;
-let background = document.createElement("img");
-let captureCanvas: HTMLCanvasElement;
-let captureContext: CanvasRenderingContext2D;
 let viewBackground = "black";
 
 export function init(
   _size: VectorLike,
   _bodyBackground: string,
-  _viewBackground: string,
-  isCapturing: boolean
+  _viewBackground: string
 ) {
   size.set(_size);
   viewBackground = _viewBackground;
@@ -52,32 +47,9 @@ color: #888;
   context = canvas.getContext("2d");
   context.imageSmoothingEnabled = false;
   document.body.appendChild(canvas);
-  if (isCapturing) {
-    captureCanvas = document.createElement("canvas");
-    const cw = size.y * 2;
-    captureCanvas.width = size.x > cw ? size.x : cw;
-    captureCanvas.height = size.y;
-    captureContext = captureCanvas.getContext("2d");
-    captureContext.fillStyle = "black";
-    gcc.setOptions({ scale: 2, capturingFps: 60 });
-  }
 }
 
 export function clear() {
   context.fillStyle = viewBackground;
   context.fillRect(0, 0, size.x, size.y);
-}
-
-export function saveAsBackground() {
-  background.src = canvas.toDataURL();
-}
-
-export function drawBackground() {
-  context.drawImage(background, 0, 0);
-}
-
-export function capture() {
-  captureContext.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
-  captureContext.drawImage(canvas, (captureCanvas.width - canvas.width) / 2, 0);
-  gcc.capture(captureCanvas);
 }
