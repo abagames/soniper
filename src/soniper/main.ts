@@ -50,7 +50,7 @@ type UndoHistory = {
   keeperAngle: number;
 };
 let undoHistories: UndoHistory[];
-const baseSeed = 2;
+const baseSeed = 14;
 const clearLevelCount = 30;
 const localStorageKey = "soniper-100";
 
@@ -104,10 +104,10 @@ function initLevel() {
   moveAnimations = [];
   levelGeneratingCount = 0;
   levelGeneratingMaxCrateCount = -1;
-  random.setSeed(levelCount);
+  random.setSeed(levelCount + baseSeed);
   levelPartsSize.set(
-    clamp(Math.floor(Math.sqrt(levelCount * 1.2)), 2, 6),
-    clamp(Math.floor(Math.sqrt(levelCount * 0.7)), 2, 4)
+    clamp(Math.floor(random.get(Math.sqrt(levelCount * 2))), 2, 6),
+    clamp(Math.floor(random.get(Math.sqrt(levelCount * 1.5))), 2, 4)
   );
   undoHistories = [];
   terminal.clear();

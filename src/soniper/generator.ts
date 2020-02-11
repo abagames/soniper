@@ -32,12 +32,12 @@ export function init() {
 export function generate(seed: number, partsSize: VectorLike) {
   random.setSeed(seed);
   clearGrid();
-  const { walls, floors, reachableFloors } = generateWalls(partsSize);
-  placeCrates({ walls, floors, reachableFloors });
-  return moveCrates({ reachableFloors });
+  const { walls, floors, reachableFloors } = generateFloors(partsSize);
+  generateWalls({ walls, floors, reachableFloors });
+  return placeCrates({ reachableFloors });
 }
 
-function generateWalls(ps: VectorLike) {
+function generateFloors(ps: VectorLike) {
   size.set(ps.x * 3 + 4, ps.y * 3 + 4);
   offset
     .set((terminalSize.x - size.x) / 2, (terminalSize.y - size.y) / 2)
@@ -89,7 +89,7 @@ function generateWalls(ps: VectorLike) {
   return { walls, floors, reachableFloors };
 }
 
-function placeCrates({ walls, floors, reachableFloors }) {
+function generateWalls({ walls, floors, reachableFloors }) {
   reachableFloors.forEach(f => {
     for (let ox = -1; ox <= 1; ox++) {
       for (let oy = -1; oy <= 1; oy++) {
@@ -121,7 +121,7 @@ function placeCrates({ walls, floors, reachableFloors }) {
   });
 }
 
-function moveCrates({ reachableFloors }) {
+function placeCrates({ reachableFloors }) {
   let crateCandidates = reachableFloors.filter(
     f => f.x !== keeperPos.x || f.y !== keeperPos.y
   );
