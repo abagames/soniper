@@ -241,13 +241,11 @@ function checkMovable(x, y) {
 
 export function removeCrate(p) {
   const g = grid[p.x][p.y];
-  if (g !== "crate" && g !== "crate on dot") console.error("no crate");
   grid[p.x][p.y] = g === "crate on dot" ? "dot" : "empty";
 }
 
 export function setCrate(p) {
   const g = grid[p.x][p.y];
-  if (g === "crate" || g === "crate on dot") console.error("crate");
   grid[p.x][p.y] = g === "dot" ? "crate on dot" : "crate";
 }
 
